@@ -1,0 +1,44 @@
+package hatena
+
+import (
+	"crypto/rand"
+	"crypto/sha1"
+	"encoding/base64"
+	"fmt"
+	"net/http"
+	"time"
+)
+
+const iso8601 = "2006-01-02T15:04:05-0700"
+
+// A WSSETransport is an implementation of the http.RoundTripper for WSSE
+// authentication.
+//
+// https://www.xml.com/pub/a/2003/12/17/dive.html
+type WSSETransport struct {
+	// Username is a user name for the authentication
+	Username string
+	// Password is a password for the authentication
+	Password string
+
+	http.RoundTripper
+}
+
+func (t WSSETransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	var b [16]byte
+	_, err := rand.Read(b[:])
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().Format(iso8601)
+	nonce := fmt.Sprintf("%x", b)
+	digest := sha1.Sum([]byte(nonce + now + t.Password))
+	digestbase64 := base64.StdEncoding.EncodeToString(digest[:])
+	r.Header.Set("X-WSSE", fmt.Sprintf("UsernameToken Username=%q, PasswordDigest=%q, Nonce=%q, Created=%q", t.Username, digestbase64, nonce, now))
+
+	if t.RoundTripper == nil {
+		return http.DefaultTransport.RoundTrip(r)
+	}
+	return t.RoundTripper.RoundTrip(r)
+}
