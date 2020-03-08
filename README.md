@@ -1,0 +1,2 @@
+# hatenactl
+Hatena CLI
