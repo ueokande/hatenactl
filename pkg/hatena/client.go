@@ -40,6 +40,9 @@ type ListEntriesInput struct {
 	HatenaID string
 	// BlobID
 	BlogID string
+
+	// Page for a pagenation
+	Page string
 }
 
 func (c *Client) ListEntries(ctx context.Context, input ListEntriesInput) (*Feed, error) {
@@ -47,6 +50,11 @@ func (c *Client) ListEntries(ctx context.Context, input ListEntriesInput) (*Feed
 		Scheme: "https",
 		Host:   "blog.hatena.ne.jp",
 		Path:   path.Join(input.HatenaID, input.BlogID, "atom", "entry"),
+	}
+	if len(input.Page) > 0 {
+		q := u.Query()
+		q.Add("page", input.Page)
+		u.RawQuery = q.Encode()
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {

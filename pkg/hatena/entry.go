@@ -2,6 +2,7 @@ package hatena
 
 import (
 	"encoding/xml"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,27 @@ type Feed struct {
 	Author Author `xml:"author"`
 
 	Entries []Entry `xml:"entry"`
+}
+
+// NextPage returns a next page id of the entry list.  It returns empty string
+// if the next link is not presented.
+func (f *Feed) NextPage() string {
+	var first Link
+	for _, l := range f.Links {
+		if l.Rel == "first" {
+			first = l
+		}
+	}
+	if len(first.Href) == 0 {
+		return ""
+	}
+
+	for _, l := range f.Links {
+		if l.Rel == "next" {
+			return strings.TrimPrefix(l.Href, first.Href+"?page=")
+		}
+	}
+	return ""
 }
 
 // A Entry represents an entry of the blog.
