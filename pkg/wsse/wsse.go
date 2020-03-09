@@ -1,4 +1,4 @@
-package hatena
+package wsse
 
 import (
 	"crypto/rand"
@@ -11,11 +11,11 @@ import (
 
 const iso8601 = "2006-01-02T15:04:05-0700"
 
-// A WSSETransport is an implementation of the http.RoundTripper for WSSE
+// A Transport is an implementation of the http.RoundTripper for WSSE
 // authentication.
 //
 // https://www.xml.com/pub/a/2003/12/17/dive.html
-type WSSETransport struct {
+type Transport struct {
 	// Username is a user name for the authentication
 	Username string
 	// Password is a password for the authentication
@@ -24,7 +24,7 @@ type WSSETransport struct {
 	http.RoundTripper
 }
 
-func (t WSSETransport) RoundTrip(r *http.Request) (*http.Response, error) {
+func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 	var b [16]byte
 	_, err := rand.Read(b[:])
 	if err != nil {

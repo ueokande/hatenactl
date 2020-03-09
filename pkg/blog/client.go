@@ -1,4 +1,4 @@
-package hatena
+package blog
 
 import (
 	"context"
@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/ueokande/hatenactl/pkg/wsse"
 )
 
-// A Client is a client to get entries from Hatena blob via AtomPub
+// A Client is a client for HatenaBlog using Atom API.
 //
 // http://developer.hatena.ne.jp/ja/documents/blog/apis/atom
 type Client struct {
@@ -22,7 +24,7 @@ func NewClient(user, token string, client *http.Client) *Client {
 	if client == nil {
 		return &Client{
 			http: &http.Client{
-				Transport: WSSETransport{
+				Transport: wsse.Transport{
 					Username: user,
 					Password: token,
 				},
@@ -30,7 +32,7 @@ func NewClient(user, token string, client *http.Client) *Client {
 		}
 	}
 	return &Client{
-		http: http.DefaultClient,
+		http: client,
 	}
 }
 

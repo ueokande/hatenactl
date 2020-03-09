@@ -1,4 +1,4 @@
-package hatena
+package blog
 
 import (
 	"encoding/xml"
