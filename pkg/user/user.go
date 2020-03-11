@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -31,7 +32,11 @@ func (c *Client) GetUser(ctx context.Context) (*User, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("server returns %d (%s)", resp.StatusCode, resp.Status)
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("server returns %d (%s): %s", resp.StatusCode, resp.Status, respBody)
 	}
 
 	var user User
