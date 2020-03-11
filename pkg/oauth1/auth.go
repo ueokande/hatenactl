@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -60,7 +59,7 @@ func (c *Client) Initiate(ctx context.Context, callbackURL string, params url.Va
 		"oauth_version":          "1.0",
 		"oauth_callback":         callbackURL,
 	}
-	oauthParams["oauth_signature"] = c.Signer.Sign("", c.signatureText(req, oauthParams, params))
+	oauthParams["oauth_signature"] = c.Signer.Sign("", signatureText(req, oauthParams, params))
 	oauthParams["realm"] = c.Realm
 
 	req.Header.Set("Authorization", oauthAuthorizationHeaderValue(oauthParams))
@@ -135,7 +134,7 @@ func (c *Client) GetAccessToken(ctx context.Context, token Token, verifier strin
 		"oauth_signature_method": c.Signer.Method(),
 		"oauth_version":          "1.0",
 	}
-	oauthParams["oauth_signature"] = c.Signer.Sign(token.Secret, c.signatureText(req, oauthParams, nil))
+	oauthParams["oauth_signature"] = c.Signer.Sign(token.Secret, signatureText(req, oauthParams, nil))
 	oauthParams["realm"] = c.Realm
 
 	req.Header.Set("Authorization", oauthAuthorizationHeaderValue(oauthParams))
@@ -170,39 +169,6 @@ func (c *Client) GetAccessToken(ctx context.Context, token Token, verifier strin
 		token.Secret = v
 	}
 	return token, nil
-}
-
-// signatureText returns a base string of the signing by Signer.
-//
-// The oauthParams is a set of the OAuth parameter (such as // oauth_consumer_key).
-// The caller must exclude "realm" parameter.  The userParams is a set of the
-// optional parameter specified in request body or URL query.
-//
-// See: RFC 5849 - 3.4.1  Signature Base String
-func (c *Client) signatureText(req *http.Request, oauthParams map[string]string, userParams url.Values) string {
-	params := make(map[string][]string)
-	for k, v := range oauthParams {
-		params[url.QueryEscape(k)] = append(params[k], v)
-	}
-	for k, vs := range userParams {
-		params[url.QueryEscape(k)] = append(params[k], vs...)
-	}
-
-	var keys []string
-	for k := range params {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	var kvs []string
-	for _, k := range keys {
-		for _, v := range params[k] {
-			kvs = append(kvs, k+"="+url.QueryEscape(v))
-		}
-	}
-	urlPart := url.QueryEscape(req.URL.Scheme + "://" + req.URL.Host + req.URL.Path)
-	parameterPart := url.QueryEscape(strings.Join(kvs, "&"))
-	return strings.Join([]string{req.Method, urlPart, parameterPart}, "&")
 }
 
 // nonce generate a random bytes with length of 16 bytes with HEX-encoded.
