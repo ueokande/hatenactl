@@ -4,36 +4,17 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
-
-	"github.com/ueokande/hatenactl/pkg/wsse"
 )
 
 // A Client is a client for HatenaBlog using Atom API.
 //
 // http://developer.hatena.ne.jp/ja/documents/blog/apis/atom
 type Client struct {
-	http *http.Client
-}
-
-// NewClient creates a new client with the user and the API token for
-// the authentication.
-func NewClient(user, token string, client *http.Client) *Client {
-	if client == nil {
-		return &Client{
-			http: &http.Client{
-				Transport: wsse.Transport{
-					Username: user,
-					Password: token,
-				},
-			},
-		}
-	}
-	return &Client{
-		http: client,
-	}
+	HTTPClient *http.Client
 }
 
 // ListEntriesInput represents an input parameter of the Client.ListEntries
@@ -63,14 +44,18 @@ func (c *Client) ListEntries(ctx context.Context, input ListEntriesInput) (*Feed
 		return nil, err
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("server returns %d (%s)", resp.StatusCode, resp.Status)
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("server returns %d (%s): %s", resp.StatusCode, resp.Status, respBody)
 	}
 
 	var feed Feed

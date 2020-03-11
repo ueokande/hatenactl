@@ -24,7 +24,7 @@ func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 		"oauth_signature_method": t.Signer.Method(),
 		"oauth_version":          "1.0",
 	}
-	oauthParams["oauth_signature"] = t.Signer.Sign(t.OAuthToken.Secret, signatureText(r, oauthParams, nil))
+	oauthParams["oauth_signature"] = t.Signer.Sign(t.OAuthToken.Secret, signatureText(r, oauthParams, r.URL.Query()))
 	oauthParams["realm"] = t.Realm
 
 	r.Header.Set("Authorization", oauthAuthorizationHeaderValue(oauthParams))
