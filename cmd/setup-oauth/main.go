@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"net/url"
 	"os"
@@ -17,6 +18,8 @@ import (
 var (
 	OAuthConsumerKey    = os.Getenv("OAUTH_CONSUMER_KEY")
 	OAuthConsumerSecret = os.Getenv("OAUTH_CONSUMER_SECRET")
+
+	flgScope = flag.String("scope", "read_public", "comma-separated scoped")
 )
 
 func openURL(url string) error {
@@ -49,7 +52,7 @@ func run(ctx context.Context) error {
 	}
 
 	q := url.Values{}
-	q.Set("scope", "read_public")
+	q.Set("scope", *flgScope)
 	token, err := client.Initiate(ctx, oauth1.CallbackOOB, q)
 	if err != nil {
 		return fmt.Errorf("unable to initiate oauth app: %w", err)
@@ -82,6 +85,8 @@ func run(ctx context.Context) error {
 }
 
 func main() {
+	flag.Parse()
+
 	err := run(context.Background())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
