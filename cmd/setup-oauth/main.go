@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ueokande/hatenactl/pkg/oauth1"
+	"github.com/ueokande/hatenactl/pkg/hatena/oauth1"
 )
 
 var (
