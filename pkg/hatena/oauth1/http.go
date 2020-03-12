@@ -34,3 +34,16 @@ func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 	return t.RoundTripper.RoundTrip(r)
 }
+
+func NewHTTPClient(consumerKey, consumerSecret, token, tokenSecret string) *http.Client {
+	return &http.Client{
+		Transport: &Transport{
+			ConsumerKey: consumerKey,
+			Signer:      &HMACSHA1{ConsumerSecret: consumerSecret},
+			OAuthToken: Token{
+				Token:  token,
+				Secret: tokenSecret,
+			},
+		},
+	}
+}

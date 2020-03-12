@@ -2,6 +2,7 @@ package blog
 
 import (
 	"encoding/xml"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -61,6 +62,28 @@ type Entry struct {
 	Control Control `xml:"control"`
 
 	Categories []Category `xml:"category"`
+}
+
+func (e Entry) OriginalLink() *Link {
+	for _, l := range e.Links {
+		if l.Rel == "alternate" {
+			return &l
+		}
+	}
+	return nil
+}
+
+func (e Entry) Path() string {
+	link := e.OriginalLink()
+	if link == nil {
+		return ""
+	}
+
+	u, err := url.Parse(link.Href)
+	if err != nil {
+		return ""
+	}
+	return u.Path
 }
 
 // A Link represents a link
