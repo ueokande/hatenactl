@@ -1,6 +1,7 @@
 package wsse
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/base64"
@@ -25,17 +26,22 @@ type Transport struct {
 }
 
 func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
-	var b [16]byte
-	_, err := rand.Read(b[:])
+	var nonce [16]byte
+	_, err := rand.Read(nonce[:])
 	if err != nil {
 		return nil, err
 	}
 
 	now := time.Now().Format(iso8601)
-	nonce := fmt.Sprintf("%x", b)
-	digest := sha1.Sum([]byte(nonce + now + t.Password))
-	digestbase64 := base64.StdEncoding.EncodeToString(digest[:])
-	r.Header.Set("X-WSSE", fmt.Sprintf("UsernameToken Username=%q, PasswordDigest=%q, Nonce=%q, Created=%q", t.Username, digestbase64, nonce, now))
+
+	token := bytes.Join([][]byte{nonce[:], []byte(now), []byte(t.Password)}, []byte{})
+	digest := sha1.Sum(token)
+	wsse := fmt.Sprintf("UsernameToken Username=%q, PasswordDigest=%q, Nonce=%q, Created=%q",
+		t.Username,
+		base64.StdEncoding.EncodeToString(digest[:]),
+		base64.StdEncoding.EncodeToString(nonce[:]),
+		now)
+	r.Header.Set("X-WSSE", wsse)
 
 	if t.RoundTripper == nil {
 		return http.DefaultTransport.RoundTrip(r)
