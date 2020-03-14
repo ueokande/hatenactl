@@ -65,3 +65,35 @@ func (f HatenaKeywordFilter) Process(entry blog.Entry, root *html.Node) error {
 	}
 	return tr.WalkTransform(root)
 }
+
+// CategoryFilter presents a filter to add categories into the <head> tag.
+// The categories are provided by <meta> tags as the following:
+//
+//    <meta property="hatena:category" content="Games" />
+//    <meta property="hatena:category" content="Hobby" />
+type CategoryFilter struct{}
+
+func (f CategoryFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type != html.ElementNode {
+				return node, nil
+			}
+			if node.Data == "head" {
+				for _, c := range entry.Categories {
+					meta := &html.Node{
+						Type: html.ElementNode,
+						Data: "meta",
+						Attr: []html.Attribute{
+							{Key: "property", Val: "hatena:category"},
+							{Key: "content", Val: c.Term},
+						},
+					}
+					node.AppendChild(meta)
+				}
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}

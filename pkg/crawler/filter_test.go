@@ -70,3 +70,37 @@ Hello, golang world (<a href="#">see also</a>)
 		t.Errorf("%q != %q", rendered, result)
 	}
 }
+
+func TestCategoryFilter(t *testing.T) {
+	src := `<html><head></head><body></body></html>`
+	result := `<html><head>` +
+		`<meta property="hatena:category" content="Games"/>` +
+		`<meta property="hatena:category" content="Hobby"/>` +
+		`</head><body></body></html>`
+
+	f := CategoryFilter{}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{
+		Categories: []blog.Category{
+			{Term: "Games"}, {Term: "Hobby"},
+		},
+	}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}
