@@ -135,3 +135,34 @@ func (f ImagePathFilter) Process(entry blog.Entry, root *html.Node) error {
 	}
 	return tr.WalkTransform(root)
 }
+
+// CodeFilter presents a filter to make styled codes to plain text in the <pre>
+// tags.
+//
+type CodeFilter struct{}
+
+func (f CodeFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type != html.ElementNode {
+				return node, nil
+			}
+			if node.Data == "span" && node.Parent.Data == "pre" {
+				return &html.Node{
+					Type: html.TextNode,
+					Data: node.FirstChild.Data,
+				}, nil
+			} else if node.Data == "pre" {
+				var attrs []html.Attribute
+				for _, attr := range node.Attr {
+					if attr.Key == "data-lang" {
+						attrs = append(attrs, attr)
+					}
+				}
+				node.Attr = attrs
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}
