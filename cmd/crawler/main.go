@@ -62,6 +62,10 @@ func run(ctx context.Context) error {
 		DataStore: &crawler.DataStore{
 			Directory: "/tmp/",
 		},
+		Filters: []crawler.Filter{
+			&crawler.TitleFilter{},
+			&crawler.HatenaKeywordFilter{},
+		},
 	}
 	return c.Start(ctx)
 }
