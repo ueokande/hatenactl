@@ -104,3 +104,36 @@ func TestCategoryFilter(t *testing.T) {
 		t.Errorf("%q != %q", rendered, result)
 	}
 }
+
+func TestImagePathFilter(t *testing.T) {
+	src := `<html><head></head><body>` +
+		`<img src="https://my-cdn.example.com/2020/03/01/foobar.png"/>` +
+		`<x-img src="https://my-cdn.example.com/2020/03/01/foobar.png"></x-img>` +
+		`</body></html>`
+	result := `<html><head></head><body>` +
+		`<img src="foobar.png"/>` +
+		`<x-img src="https://my-cdn.example.com/2020/03/01/foobar.png"></x-img>` +
+		`</body></html>`
+
+	f := ImagePathFilter{}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}

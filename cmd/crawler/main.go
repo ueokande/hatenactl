@@ -66,6 +66,7 @@ func run(ctx context.Context) error {
 			&crawler.TitleFilter{},
 			&crawler.HatenaKeywordFilter{},
 			&crawler.CategoryFilter{},
+			&crawler.ImagePathFilter{},
 		},
 	}
 	return c.Start(ctx)

@@ -1,6 +1,9 @@
 package crawler
 
 import (
+	"net/url"
+	"path"
+
 	"github.com/ueokande/hatenactl/pkg/hatena/blog"
 	"golang.org/x/net/html"
 )
@@ -90,6 +93,41 @@ func (f CategoryFilter) Process(entry blog.Entry, root *html.Node) error {
 						},
 					}
 					node.AppendChild(meta)
+				}
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}
+
+// ImagePathFilter presents a filter to fix image's url as a relative path as a
+// base name.
+//
+// It converts a src attribute in the <img> tag:
+//
+//    <img src="https://my-cdn.example.com/2020/03/01/foobar.png" />
+//
+// to:
+//
+//    <img src="foobar.png" />
+type ImagePathFilter struct{}
+
+func (f ImagePathFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type != html.ElementNode {
+				return node, nil
+			}
+			if node.Data == "img" {
+				for i, attr := range node.Attr {
+					if attr.Key == "src" {
+						u, err := url.Parse(attr.Val)
+						if err != nil {
+							return nil, err
+						}
+						node.Attr[i].Val = path.Base(u.Path)
+					}
 				}
 			}
 			return node, nil
