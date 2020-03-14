@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ueokande/hatenactl/pkg/hatena/blog"
 	"golang.org/x/net/html"
@@ -155,6 +156,105 @@ func TestCodeFilter(t *testing.T) {
 	}
 
 	err = f.Process(blog.Entry{}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}
+
+func TestDraftFilter(t *testing.T) {
+	src := `<html><head></head><body></body></html>`
+	result := `<html><head>` +
+		`<meta property="hatena:draft" content="yes"/>` +
+		`</head><body></body></html>`
+
+	f := DraftFilter{}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{
+		Control: blog.Control{Draft: "yes"},
+	}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}
+
+func TestDateTimeFilter(t *testing.T) {
+	src := `<html><head></head><body></body></html>`
+	result := `<html><head>` +
+		`<meta property="hatena:edited" content="2020-02-14T11:22:33Z"/>` +
+		`<meta property="hatena:updated" content="2020-03-14T11:22:33Z"/>` +
+		`<meta property="hatena:published" content="2020-04-14T11:22:33Z"/>` +
+		`</head><body></body></html>`
+
+	f := DateTimeFilter{}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{
+		Edited:    time.Date(2020, 02, 14, 11, 22, 33, 0, time.UTC),
+		Updated:   time.Date(2020, 03, 14, 11, 22, 33, 0, time.UTC),
+		Published: time.Date(2020, 04, 14, 11, 22, 33, 0, time.UTC),
+	}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}
+
+func TestLinkFilter(t *testing.T) {
+	src := `<html><head></head><body></body></html>`
+	result := `<html><head>` +
+		`<meta property="hatena:alternate" content="https://example.com/"/>` +
+		`</head><body></body></html>`
+
+	f := LinkFilter{}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{
+		Links: []blog.Link{
+			{Rel: "alternate", Href: "https://example.com/"},
+		},
+	}, root)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -68,6 +68,9 @@ func run(ctx context.Context) error {
 			&crawler.CategoryFilter{},
 			&crawler.ImagePathFilter{},
 			&crawler.CodeFilter{},
+			&crawler.DraftFilter{},
+			&crawler.DateTimeFilter{},
+			&crawler.LinkFilter{},
 		},
 	}
 	return c.Start(ctx)

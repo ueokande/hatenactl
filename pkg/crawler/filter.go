@@ -3,6 +3,7 @@ package crawler
 import (
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/ueokande/hatenactl/pkg/hatena/blog"
 	"golang.org/x/net/html"
@@ -84,14 +85,7 @@ func (f CategoryFilter) Process(entry blog.Entry, root *html.Node) error {
 			}
 			if node.Data == "head" {
 				for _, c := range entry.Categories {
-					meta := &html.Node{
-						Type: html.ElementNode,
-						Data: "meta",
-						Attr: []html.Attribute{
-							{Key: "property", Val: "hatena:category"},
-							{Key: "content", Val: c.Term},
-						},
-					}
+					meta := makeMetaTag("category", c.Term)
 					node.AppendChild(meta)
 				}
 			}
@@ -165,4 +159,63 @@ func (f CodeFilter) Process(entry blog.Entry, root *html.Node) error {
 		},
 	}
 	return tr.WalkTransform(root)
+}
+
+// DraftFilter presents a filter to add draft information as a meta tag.
+type DraftFilter struct{}
+
+func (f DraftFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type == html.ElementNode && node.Data == "head" {
+				meta := makeMetaTag("draft", entry.Control.Draft)
+				node.AppendChild(meta)
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}
+
+// DateTimeFilter presents a filter to add timestamp on editted, published, and
+// updated the entry as a meta tag.
+type DateTimeFilter struct{}
+
+func (f DateTimeFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type == html.ElementNode && node.Data == "head" {
+				node.AppendChild(makeMetaTag("edited", entry.Edited.Format(time.RFC3339)))
+				node.AppendChild(makeMetaTag("updated", entry.Updated.Format(time.RFC3339)))
+				node.AppendChild(makeMetaTag("published", entry.Published.Format(time.RFC3339)))
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}
+
+type LinkFilter struct{}
+
+func (f LinkFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type == html.ElementNode && node.Data == "head" {
+				node.AppendChild(makeMetaTag("alternate", entry.OriginalLink().Href))
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}
+
+func makeMetaTag(property, content string) *html.Node {
+	return &html.Node{
+		Type: html.ElementNode,
+		Data: "meta",
+		Attr: []html.Attribute{
+			{Key: "property", Val: "hatena:" + property},
+			{Key: "content", Val: content},
+		},
+	}
 }
