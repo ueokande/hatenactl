@@ -219,3 +219,27 @@ func makeMetaTag(property, content string) *html.Node {
 		},
 	}
 }
+
+// EncodingFilter presents a filter to provide a charset attribute (UTF-8) by
+// the <meta> tag.
+type EncodingFilter struct {
+}
+
+func (f EncodingFilter) Process(entry blog.Entry, root *html.Node) error {
+
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type == html.ElementNode && node.Data == "head" {
+				node.AppendChild(&html.Node{
+					Type: html.ElementNode,
+					Data: "meta",
+					Attr: []html.Attribute{
+						{Key: "charset", Val: "UTF-8"},
+					},
+				})
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}

@@ -20,7 +20,8 @@ type IndexPageValue struct {
 const IndexPageTemplate = `
 <!DOCTYPE html>
 <head>
-<title>{{ .Title }}</title>
+  <meta charset="UTF-8"/>
+  <title>{{ .Title }}</title>
 </head>
 <html>
 <h1>{{ .Title }}</h1>
@@ -48,7 +49,8 @@ type LandingValue struct {
 const LandingPageTemplate = `
 <!DOCTYPE html>
 <head>
-<title>{{ .Title }}</title>
+  <meta charset="UTF-8"/>
+  <title>{{ .Title }}</title>
 </head>
 <html>
 <h1>{{ .Title }}</h1>

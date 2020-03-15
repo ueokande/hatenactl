@@ -270,3 +270,32 @@ func TestLinkFilter(t *testing.T) {
 		t.Errorf("%q != %q", rendered, result)
 	}
 }
+
+func TestEncodingFilter(t *testing.T) {
+	src := `<html><head></head><body></body></html>`
+	result := `<html><head>` +
+		`<meta charset="UTF-8"/>` +
+		`</head><body></body></html>`
+
+	f := EncodingFilter{}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}

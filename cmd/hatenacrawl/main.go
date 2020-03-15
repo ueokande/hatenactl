@@ -102,6 +102,7 @@ func run(ctx context.Context) error {
 			&crawler.DraftFilter{},
 			&crawler.DateTimeFilter{},
 			&crawler.LinkFilter{},
+			&crawler.EncodingFilter{},
 		},
 	}
 	return c.Start(ctx)
