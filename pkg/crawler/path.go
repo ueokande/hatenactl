@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"net/url"
 	"path/filepath"
 	"strconv"
 
@@ -20,7 +21,7 @@ func ImagePath(entry blog.Entry, image string) string {
 }
 
 func CategoryPath(category string) string {
-	return filepath.Join("category", category, "index.html")
+	return filepath.Join("category", url.PathEscape(category), "index.html")
 }
 
 func ArchivePath(year int) string {

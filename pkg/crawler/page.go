@@ -3,6 +3,7 @@ package crawler
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"text/template"
 
@@ -125,7 +126,7 @@ func RenderLanding(w io.Writer, title string, categories []string, years []int) 
 			Path string
 		}{
 			Name: c,
-			Path: CategoryPath(c),
+			Path: CategoryPath(url.PathEscape(c)),
 		})
 	}
 
