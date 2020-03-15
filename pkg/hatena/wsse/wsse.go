@@ -48,3 +48,12 @@ func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 	return t.RoundTripper.RoundTrip(r)
 }
+
+func NewHTTPClient(username, password string) *http.Client {
+	return &http.Client{
+		Transport: &Transport{
+			Username: username,
+			Password: password,
+		},
+	}
+}
