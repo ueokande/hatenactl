@@ -20,6 +20,7 @@ var (
 
 	flgHatenaID = flag.String("hatena-id", "", "hatena account id")
 	flgBlogID   = flag.String("blog-id", "", "hatena blog id")
+	flgOutDir   = flag.String("out-dir", os.TempDir(), "directory where output to")
 )
 
 func validate() error {
@@ -60,7 +61,7 @@ func run(ctx context.Context) error {
 			),
 		},
 		DataStore: &crawler.DataStore{
-			Directory: "/tmp/",
+			Directory: *flgOutDir,
 		},
 		Filters: []crawler.Filter{
 			&crawler.TitleFilter{},

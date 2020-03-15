@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -28,14 +29,20 @@ type Crawler struct {
 }
 
 func (c Crawler) Start(ctx context.Context) error {
+	byCategory := make(map[string][]blog.Entry)
+	byYear := make(map[int][]blog.Entry)
 	urlext := ImageURLExtractor{}
 
-	return c.listAllEntries(ctx, func(ctx context.Context, entry blog.Entry) error {
+	err := c.listAllEntries(ctx, func(ctx context.Context, entry blog.Entry) error {
 		if entry.FormattedContent.Type != "text/html" {
 			return errors.New("unknown content type: " + entry.FormattedContent.Type)
 		}
+		for _, cat := range entry.Categories {
+			byCategory[cat.Term] = append(byCategory[cat.Term], entry)
+		}
+		byYear[entry.Published.Year()] = append(byYear[entry.Published.Year()], entry)
 
-		p := filepath.Join(c.BlogID, entry.Path(), "index.html")
+		p := filepath.Join(c.BlogID, EntryPath(entry))
 		w, err := c.DataStore.Writer(p)
 		if err != nil {
 			return err
@@ -67,6 +74,80 @@ func (c Crawler) Start(ctx context.Context) error {
 		fmt.Println("saved", p)
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	for cat, entries := range byCategory {
+		err := func(category string, entries []blog.Entry) error {
+			p := filepath.Join(c.BlogID, CategoryPath(category))
+			f, err := c.DataStore.Writer(p)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+
+			err = RenderCategoryIndex(f, category, entries)
+			if err != nil {
+				return err
+			}
+			fmt.Println("saved", p)
+
+			return nil
+		}(cat, entries)
+		if err != nil {
+			return fmt.Errorf("unable to create a category index '%s': %w", cat, err)
+		}
+	}
+
+	var years []int
+	for year := range byYear {
+		years = append(years, year)
+	}
+	sort.Ints(years)
+
+	for _, year := range years {
+		err := func(year int, entries []blog.Entry) error {
+			p := filepath.Join(c.BlogID, ArchivePath(year))
+			f, err := c.DataStore.Writer(p)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+
+			err = RenderArchiveIndex(f, year, entries)
+			if err != nil {
+				return err
+			}
+			fmt.Println("saved", p)
+
+			return nil
+		}(year, byYear[year])
+		if err != nil {
+			return fmt.Errorf("unable to create an archive index '%d-01-01': %w", year, err)
+		}
+	}
+
+	err = func() error {
+		p := filepath.Join(c.BlogID, LandingPath())
+		f, err := c.DataStore.Writer(p)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		var categories []string
+		for category := range byCategory {
+			categories = append(categories, category)
+		}
+		err = RenderLanding(f, c.BlogID, categories, years)
+		if err != nil {
+			return err
+		}
+		fmt.Println("saved", p)
+		return nil
+	}()
+	return err
 }
 
 func (c Crawler) downloadImages(ctx context.Context, entry blog.Entry, urls []string) error {
@@ -83,7 +164,7 @@ func (c Crawler) downloadImages(ctx context.Context, entry blog.Entry, urls []st
 		}
 		defer resp.Close()
 
-		f, err := c.DataStore.Writer(filepath.Join(c.BlogID, entry.Path(), basename))
+		f, err := c.DataStore.Writer(ImagePath(entry, basename))
 		if err != nil {
 			return err
 		}
