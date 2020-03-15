@@ -27,6 +27,7 @@ var (
 	flgBlogID    = flag.String("blog-id", "", "hatena blog id")
 	flgOutDir    = flag.String("out-dir", os.TempDir(), "directory where output to")
 	flgUrlPrefix = flag.String("url-prefix", "", "prefix of the path in URL in published site")
+	flgCSSPath   = flag.String("css-path", "", "path to css to load in pages")
 )
 
 func validate() error {
@@ -87,6 +88,7 @@ func run(ctx context.Context) error {
 		BlogClient: &blog.Client{
 			HTTPClient: newHTTPClient(),
 		},
+		CSSPath: *flgCSSPath,
 		DataStore: &crawler.DataStore{
 			Directory: *flgOutDir,
 		},
@@ -103,6 +105,9 @@ func run(ctx context.Context) error {
 			&crawler.DateTimeFilter{},
 			&crawler.LinkFilter{},
 			&crawler.EncodingFilter{},
+			&crawler.AssetFilter{
+				CSSPaths: []string{*flgCSSPath},
+			},
 		},
 	}
 	return c.Start(ctx)

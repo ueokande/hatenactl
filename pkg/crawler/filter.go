@@ -222,11 +222,9 @@ func makeMetaTag(property, content string) *html.Node {
 
 // EncodingFilter presents a filter to provide a charset attribute (UTF-8) by
 // the <meta> tag.
-type EncodingFilter struct {
-}
+type EncodingFilter struct{}
 
 func (f EncodingFilter) Process(entry blog.Entry, root *html.Node) error {
-
 	tr := &Transformer{
 		Func: func(node *html.Node) (*html.Node, error) {
 			if node.Type == html.ElementNode && node.Data == "head" {
@@ -237,6 +235,47 @@ func (f EncodingFilter) Process(entry blog.Entry, root *html.Node) error {
 						{Key: "charset", Val: "UTF-8"},
 					},
 				})
+			}
+			return node, nil
+		},
+	}
+	return tr.WalkTransform(root)
+}
+
+// AssetFilter presents as filter to add assets (css and javascript links) in
+// the header.
+
+type AssetFilter struct {
+	CSSPaths        []string
+	JavaScriptPaths []string
+}
+
+func (f AssetFilter) Process(entry blog.Entry, root *html.Node) error {
+	tr := &Transformer{
+		Func: func(node *html.Node) (*html.Node, error) {
+			if node.Type == html.ElementNode && node.Data == "head" {
+				// <link rel="stylesheet" type="text/css" href="theme.css">
+				for _, p := range f.CSSPaths {
+					node.AppendChild(&html.Node{
+						Type: html.ElementNode,
+						Data: "link",
+						Attr: []html.Attribute{
+							{Key: "rel", Val: "stylesheet"},
+							{Key: "type", Val: "text/css"},
+							{Key: "href", Val: p},
+						},
+					})
+				}
+				for _, p := range f.JavaScriptPaths {
+					// <script src="myscripts.js"></script>
+					node.AppendChild(&html.Node{
+						Type: html.ElementNode,
+						Data: "script",
+						Attr: []html.Attribute{
+							{Key: "src", Val: p},
+						},
+					})
+				}
 			}
 			return node, nil
 		},

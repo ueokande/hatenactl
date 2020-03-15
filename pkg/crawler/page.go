@@ -11,6 +11,7 @@ import (
 
 type IndexPageValue struct {
 	Title   string
+	CSSPath string
 	Entries []struct {
 		Title string
 		Link  string
@@ -21,6 +22,9 @@ const IndexPageTemplate = `
 <!DOCTYPE html>
 <head>
   <meta charset="UTF-8"/>
+{{- if .CSSPath }}
+  <link rel="stylesheet" type="text/css" href="{{ .CSSPath }}">
+{{- end }}
   <title>{{ .Title }}</title>
 </head>
 <html>
@@ -36,6 +40,7 @@ const IndexPageTemplate = `
 
 type LandingValue struct {
 	Title      string
+	CSSPath    string
 	Categories []struct {
 		Name string
 		Path string
@@ -50,6 +55,9 @@ const LandingPageTemplate = `
 <!DOCTYPE html>
 <head>
   <meta charset="UTF-8"/>
+{{- if .CSSPath }}
+  <link rel="stylesheet" type="text/css" href="{{ .CSSPath }}">
+{{- end }}
   <title>{{ .Title }}</title>
 </head>
 <html>
@@ -72,6 +80,7 @@ const LandingPageTemplate = `
 func (c Crawler) RenderCategoryIndex(w io.Writer, category string, entries []blog.Entry) error {
 	var val IndexPageValue
 	val.Title = "Category: " + category
+	val.CSSPath = c.CSSPath
 	for _, e := range entries {
 		val.Entries = append(val.Entries, struct {
 			Title string
@@ -92,6 +101,7 @@ func (c Crawler) RenderCategoryIndex(w io.Writer, category string, entries []blo
 func (c Crawler) RenderArchiveIndex(w io.Writer, year int, entries []blog.Entry) error {
 	var val IndexPageValue
 	val.Title = fmt.Sprintf("Entries from %d-01-01 to 1 year", year)
+	val.CSSPath = c.CSSPath
 	for _, e := range entries {
 		val.Entries = append(val.Entries, struct {
 			Title string
@@ -112,6 +122,7 @@ func (c Crawler) RenderArchiveIndex(w io.Writer, year int, entries []blog.Entry)
 func (c Crawler) RenderLanding(w io.Writer, title string, categories []string, years []int) error {
 	var val LandingValue
 	val.Title = title
+	val.CSSPath = c.CSSPath
 	for _, year := range years {
 		val.Archives = append(val.Archives, struct {
 			Name string

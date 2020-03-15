@@ -21,6 +21,7 @@ type Crawler struct {
 	BlogClient *blog.Client
 	DataStore  *DataStore
 	Path       *Path
+	CSSPath    string
 
 	HatenaID string
 	BlogID   string

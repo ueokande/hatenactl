@@ -299,3 +299,38 @@ func TestEncodingFilter(t *testing.T) {
 		t.Errorf("%q != %q", rendered, result)
 	}
 }
+
+func TestAssetFilter(t *testing.T) {
+	src := `<html><head></head><body></body></html>`
+	result := `<html><head>` +
+		`<link rel="stylesheet" type="text/css" href="theme1.css"/>` +
+		`<link rel="stylesheet" type="text/css" href="theme2.css"/>` +
+		`<script src="script1.js"></script>` +
+		`<script src="script2.js"></script>` +
+		`</head><body></body></html>`
+
+	f := AssetFilter{
+		CSSPaths:        []string{"theme1.css", "theme2.css"},
+		JavaScriptPaths: []string{"script1.js", "script2.js"},
+	}
+	root, err := html.Parse(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = f.Process(blog.Entry{}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err = html.Render(&buf, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := buf.String()
+
+	if rendered != result {
+		t.Errorf("%q != %q", rendered, result)
+	}
+}
