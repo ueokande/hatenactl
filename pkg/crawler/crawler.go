@@ -33,6 +33,7 @@ func (c Crawler) Start(ctx context.Context) error {
 	byYear := make(map[int][]blog.Entry)
 	urlext := ImageURLExtractor{}
 
+	// 1. Download entries and images contained in the entry
 	err := c.listAllEntries(ctx, func(ctx context.Context, entry blog.Entry) error {
 		if entry.FormattedContent.Type != "text/html" {
 			return errors.New("unknown content type: " + entry.FormattedContent.Type)
@@ -78,6 +79,7 @@ func (c Crawler) Start(ctx context.Context) error {
 		return err
 	}
 
+	// 2. Generate index page by a category
 	for cat, entries := range byCategory {
 		err := func(category string, entries []blog.Entry) error {
 			p := c.Path.CategoryFilePath(category)
@@ -106,6 +108,7 @@ func (c Crawler) Start(ctx context.Context) error {
 	}
 	sort.Ints(years)
 
+	// 3. Generate archive page grouped by a year
 	for _, year := range years {
 		err := func(year int, entries []blog.Entry) error {
 			p := c.Path.ArchiveFilePath(year)
@@ -128,6 +131,7 @@ func (c Crawler) Start(ctx context.Context) error {
 		}
 	}
 
+	// 4. Generate landing page
 	err = func() error {
 		p := c.Path.LandingFilePath()
 		f, err := c.DataStore.Writer(p)
@@ -140,6 +144,7 @@ func (c Crawler) Start(ctx context.Context) error {
 		for category := range byCategory {
 			categories = append(categories, category)
 		}
+		sort.Strings(categories)
 		err = c.RenderLanding(f, c.BlogID, categories, years)
 		if err != nil {
 			return err
