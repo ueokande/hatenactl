@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -21,6 +20,7 @@ var downloader Downloader
 type Crawler struct {
 	BlogClient *blog.Client
 	DataStore  *DataStore
+	Path       *Path
 
 	HatenaID string
 	BlogID   string
@@ -42,7 +42,7 @@ func (c Crawler) Start(ctx context.Context) error {
 		}
 		byYear[entry.Published.Year()] = append(byYear[entry.Published.Year()], entry)
 
-		p := filepath.Join(c.BlogID, EntryPath(entry))
+		p := c.Path.EntryFilePath(entry)
 		w, err := c.DataStore.Writer(p)
 		if err != nil {
 			return err
@@ -80,14 +80,14 @@ func (c Crawler) Start(ctx context.Context) error {
 
 	for cat, entries := range byCategory {
 		err := func(category string, entries []blog.Entry) error {
-			p := filepath.Join(c.BlogID, CategoryPath(category))
+			p := c.Path.CategoryFilePath(category)
 			f, err := c.DataStore.Writer(p)
 			if err != nil {
 				return err
 			}
 			defer f.Close()
 
-			err = RenderCategoryIndex(f, category, entries)
+			err = c.RenderCategoryIndex(f, category, entries)
 			if err != nil {
 				return err
 			}
@@ -108,14 +108,14 @@ func (c Crawler) Start(ctx context.Context) error {
 
 	for _, year := range years {
 		err := func(year int, entries []blog.Entry) error {
-			p := filepath.Join(c.BlogID, ArchivePath(year))
+			p := c.Path.ArchiveFilePath(year)
 			f, err := c.DataStore.Writer(p)
 			if err != nil {
 				return err
 			}
 			defer f.Close()
 
-			err = RenderArchiveIndex(f, year, entries)
+			err = c.RenderArchiveIndex(f, year, entries)
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func (c Crawler) Start(ctx context.Context) error {
 	}
 
 	err = func() error {
-		p := filepath.Join(c.BlogID, LandingPath())
+		p := c.Path.LandingFilePath()
 		f, err := c.DataStore.Writer(p)
 		if err != nil {
 			return err
@@ -140,7 +140,7 @@ func (c Crawler) Start(ctx context.Context) error {
 		for category := range byCategory {
 			categories = append(categories, category)
 		}
-		err = RenderLanding(f, c.BlogID, categories, years)
+		err = c.RenderLanding(f, c.BlogID, categories, years)
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,8 @@ func (c Crawler) downloadImages(ctx context.Context, entry blog.Entry, urls []st
 		}
 		defer resp.Close()
 
-		f, err := c.DataStore.Writer(ImagePath(entry, basename))
+		p := c.Path.ImageFilePath(entry, basename)
+		f, err := c.DataStore.Writer(p)
 		if err != nil {
 			return err
 		}
@@ -174,6 +175,7 @@ func (c Crawler) downloadImages(ctx context.Context, entry blog.Entry, urls []st
 		if err != nil {
 			return err
 		}
+		fmt.Println("saved", p)
 		return nil
 	}
 	for _, u := range urls {

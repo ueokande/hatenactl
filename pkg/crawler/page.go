@@ -3,7 +3,6 @@ package crawler
 import (
 	"fmt"
 	"io"
-	"net/url"
 	"strconv"
 	"text/template"
 
@@ -56,19 +55,19 @@ const LandingPageTemplate = `
 <h2>Archives</h2>
   <ul>
 {{range .Archives}}
-    <li><a href="/{{ .Path }}">{{ .Name }}</a></li>
+    <li><a href="{{ .Path }}">{{ .Name }}</a></li>
 {{end}}
   </ul>
 <h2>By category</h2>
   <ul>
 {{range .Categories}}
-    <li><a href="/{{ .Path }}">{{ .Name }}</a></li>
+    <li><a href="{{ .Path }}">{{ .Name }}</a></li>
 {{end}}
   </ul>
 </html>
 `
 
-func RenderCategoryIndex(w io.Writer, category string, entries []blog.Entry) error {
+func (c Crawler) RenderCategoryIndex(w io.Writer, category string, entries []blog.Entry) error {
 	var val IndexPageValue
 	val.Title = "Category: " + category
 	for _, e := range entries {
@@ -77,7 +76,7 @@ func RenderCategoryIndex(w io.Writer, category string, entries []blog.Entry) err
 			Link  string
 		}{
 			Title: e.Title,
-			Link:  e.Path(),
+			Link:  c.Path.EntryURLPath(e),
 		})
 	}
 
@@ -88,7 +87,7 @@ func RenderCategoryIndex(w io.Writer, category string, entries []blog.Entry) err
 	return tmpl.Execute(w, val)
 }
 
-func RenderArchiveIndex(w io.Writer, year int, entries []blog.Entry) error {
+func (c Crawler) RenderArchiveIndex(w io.Writer, year int, entries []blog.Entry) error {
 	var val IndexPageValue
 	val.Title = fmt.Sprintf("Entries from %d-01-01 to 1 year", year)
 	for _, e := range entries {
@@ -97,7 +96,7 @@ func RenderArchiveIndex(w io.Writer, year int, entries []blog.Entry) error {
 			Link  string
 		}{
 			Title: e.Title,
-			Link:  e.Path(),
+			Link:  c.Path.EntryURLPath(e),
 		})
 	}
 
@@ -108,7 +107,7 @@ func RenderArchiveIndex(w io.Writer, year int, entries []blog.Entry) error {
 	return tmpl.Execute(w, val)
 }
 
-func RenderLanding(w io.Writer, title string, categories []string, years []int) error {
+func (c Crawler) RenderLanding(w io.Writer, title string, categories []string, years []int) error {
 	var val LandingValue
 	val.Title = title
 	for _, year := range years {
@@ -117,16 +116,16 @@ func RenderLanding(w io.Writer, title string, categories []string, years []int) 
 			Path string
 		}{
 			Name: strconv.FormatInt(int64(year), 10),
-			Path: ArchivePath(year),
+			Path: c.Path.ArchiveUrlPath(year),
 		})
 	}
-	for _, c := range categories {
+	for _, name := range categories {
 		val.Categories = append(val.Categories, struct {
 			Name string
 			Path string
 		}{
-			Name: c,
-			Path: CategoryPath(url.PathEscape(c)),
+			Name: name,
+			Path: c.Path.CategoryUrlPath(name),
 		})
 	}
 

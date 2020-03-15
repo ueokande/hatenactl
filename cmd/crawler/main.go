@@ -18,9 +18,10 @@ var (
 	OAuthToken          = os.Getenv("OAUTH_TOKEN")
 	OAuthTokenSecret    = os.Getenv("OAUTH_TOKEN_SECRET")
 
-	flgHatenaID = flag.String("hatena-id", "", "hatena account id")
-	flgBlogID   = flag.String("blog-id", "", "hatena blog id")
-	flgOutDir   = flag.String("out-dir", os.TempDir(), "directory where output to")
+	flgHatenaID  = flag.String("hatena-id", "", "hatena account id")
+	flgBlogID    = flag.String("blog-id", "", "hatena blog id")
+	flgOutDir    = flag.String("out-dir", os.TempDir(), "directory where output to")
+	flgUrlPrefix = flag.String("url-prefix", "", "prefix of the path in URL in published site")
 )
 
 func validate() error {
@@ -62,6 +63,9 @@ func run(ctx context.Context) error {
 		},
 		DataStore: &crawler.DataStore{
 			Directory: *flgOutDir,
+		},
+		Path: &crawler.Path{
+			URLPrefix: *flgUrlPrefix,
 		},
 		Filters: []crawler.Filter{
 			&crawler.TitleFilter{},
