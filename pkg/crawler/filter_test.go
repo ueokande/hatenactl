@@ -107,12 +107,15 @@ func TestCategoryFilter(t *testing.T) {
 }
 
 func TestImagePathFilter(t *testing.T) {
+	superlongfilename := strings.Repeat("x", 1024)
 	src := `<html><head></head><body>` +
 		`<img src="https://my-cdn.example.com/2020/03/01/foobar.png"/>` +
+		`<img src="https://my-cdn.example.com/2020/03/01/` + superlongfilename + `.png"/>` +
 		`<x-img src="https://my-cdn.example.com/2020/03/01/foobar.png"></x-img>` +
 		`</body></html>`
 	result := `<html><head></head><body>` +
-		`<img src="foobar.png"/>` +
+		`<img src="foobar.png" data-original-url="https://my-cdn.example.com/2020/03/01/foobar.png"/>` +
+		`<img src="2A3F1601C5398FF43DD74490C9D55B6018789F07" data-original-url="https://my-cdn.example.com/2020/03/01/` + superlongfilename + `.png"/>` +
 		`<x-img src="https://my-cdn.example.com/2020/03/01/foobar.png"></x-img>` +
 		`</body></html>`
 

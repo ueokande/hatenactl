@@ -1,6 +1,8 @@
 package crawler
 
 import (
+	"crypto/sha1"
+	"fmt"
 	"net/url"
 	"path"
 	"time"
@@ -114,14 +116,26 @@ func (f ImagePathFilter) Process(entry blog.Entry, root *html.Node) error {
 				return node, nil
 			}
 			if node.Data == "img" {
+				var src string
 				for i, attr := range node.Attr {
 					if attr.Key == "src" {
+						src = attr.Val
 						u, err := url.Parse(attr.Val)
 						if err != nil {
 							return nil, err
 						}
-						node.Attr[i].Val = path.Base(u.Path)
+						basename := path.Base(u.Path)
+						if len(basename) > 127 {
+							basename = fmt.Sprintf("%X", sha1.Sum([]byte(basename)))
+						}
+						node.Attr[i].Val = basename
 					}
+				}
+				if len(src) > 0 {
+					node.Attr = append(node.Attr, html.Attribute{
+						Key: "data-original-url",
+						Val: src,
+					})
 				}
 			}
 			return node, nil

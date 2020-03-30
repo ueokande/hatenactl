@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"context"
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"io"
@@ -163,6 +164,11 @@ func (c Crawler) downloadImages(ctx context.Context, entry blog.Entry, urls []st
 			return err
 		}
 		basename := path.Base(url.Path)
+
+		// convert long file name
+		if len(basename) > 127 {
+			basename = fmt.Sprintf("%X", sha1.Sum([]byte(basename)))
+		}
 
 		resp, err := downloader.Download(ctx, src)
 		if err != nil {
